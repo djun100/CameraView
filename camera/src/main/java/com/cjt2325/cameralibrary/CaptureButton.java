@@ -45,12 +45,14 @@ public class CaptureButton extends View {
     private float btn_left_X, btn_right_X, btn_result_radius;
 
     //state
-    private int STATE_SELECTED;
+    private int stateSelected;
     private final int STATE_LESSNESS = 0;
     private final int STATE_KEY_DOWN = 1;
     private final int STATE_CAPTURED = 2;
     private final int STATE_RECORD = 3;
+    /**正在预览已拍图片*/
     private final int STATE_PICTURE_BROWSE = 4;
+    /**正在预览已拍视频*/
     private final int STATE_RECORD_BROWSE = 5;
     private final int STATE_READYQUIT = 6;
     private final int STATE_RECORDED = 7;
@@ -77,7 +79,7 @@ public class CaptureButton extends View {
         mContext = context;
         mPaint = new Paint();
         mPaint.setAntiAlias(true);
-        STATE_SELECTED = STATE_LESSNESS;
+        stateSelected = STATE_LESSNESS;
     }
 
     @Override
@@ -117,7 +119,7 @@ public class CaptureButton extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        if (STATE_SELECTED == STATE_LESSNESS || STATE_SELECTED == STATE_RECORD) {
+        if (stateSelected == STATE_LESSNESS || stateSelected == STATE_RECORD) {
             //draw capture button
             mPaint.setColor(0xFFEEEEEE);
             canvas.drawCircle(btn_center_X, btn_center_Y, btn_outside_radius, mPaint);
@@ -152,7 +154,7 @@ public class CaptureButton extends View {
             path.lineTo(btn_return_X, btn_return_Y);
             path.lineTo(btn_return_X + btn_return_length, btn_return_Y - btn_return_length);
             canvas.drawPath(path, paint);
-        } else if (STATE_SELECTED == STATE_RECORD_BROWSE || STATE_SELECTED == STATE_PICTURE_BROWSE) {
+        } else if (stateSelected == STATE_RECORD_BROWSE || stateSelected == STATE_PICTURE_BROWSE) {
 
             mPaint.setColor(0xFFEEEEEE);
             canvas.drawCircle(btn_left_X, btn_center_Y, btn_result_radius, mPaint);
@@ -202,12 +204,12 @@ public class CaptureButton extends View {
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                if (STATE_SELECTED == STATE_LESSNESS) {
+                if (stateSelected == STATE_LESSNESS) {
                     if (event.getY() > btn_return_Y - 37 &&
                             event.getY() < btn_return_Y + 10 &&
                             event.getX() > btn_return_X - 37 &&
                             event.getX() < btn_return_X + 37) {
-                        STATE_SELECTED = STATE_READYQUIT;
+                        stateSelected = STATE_READYQUIT;
                     } else if (event.getY() > btn_center_Y - btn_outside_radius &&
                             event.getY() < btn_center_Y + btn_outside_radius &&
                             event.getX() > btn_center_X - btn_outside_radius &&
@@ -218,11 +220,11 @@ public class CaptureButton extends View {
                             Toast.makeText(mContext,"请插入储存卡",Toast.LENGTH_SHORT).show();
                         }else{
                             key_down_Y = event.getY();
-                            STATE_SELECTED = STATE_KEY_DOWN;
+                            stateSelected = STATE_KEY_DOWN;
                             postCheckForLongTouch();
                         }
                     }
-                } else if (STATE_SELECTED == STATE_RECORD_BROWSE || STATE_SELECTED == STATE_PICTURE_BROWSE) {
+                } else if (stateSelected == STATE_RECORD_BROWSE || stateSelected == STATE_PICTURE_BROWSE) {
                     if (event.getY() > btn_center_Y - btn_result_radius &&
                             event.getY() < btn_center_Y + btn_result_radius &&
                             event.getX() > btn_left_X - btn_result_radius &&
@@ -231,13 +233,13 @@ public class CaptureButton extends View {
                             ) {
                         if (mCaptureListener != null) {
 
-                            if (STATE_SELECTED == STATE_RECORD_BROWSE) {
+                            if (stateSelected == STATE_RECORD_BROWSE) {
                                 mCaptureListener.deleteRecordResult();
-                            } else if (STATE_SELECTED == STATE_PICTURE_BROWSE) {
+                            } else if (stateSelected == STATE_PICTURE_BROWSE) {
                                 mCaptureListener.cancel();
                             }
                         }
-                        STATE_SELECTED = STATE_LESSNESS;
+                        stateSelected = STATE_LESSNESS;
                         btn_left_X = btn_center_X;
                         btn_right_X = btn_center_X;
                         invalidate();
@@ -248,13 +250,13 @@ public class CaptureButton extends View {
                             event.getPointerCount() == 1
                             ) {
                         if (mCaptureListener != null) {
-                            if (STATE_SELECTED == STATE_RECORD_BROWSE) {
+                            if (stateSelected == STATE_RECORD_BROWSE) {
                                 mCaptureListener.getRecordResult();
-                            } else if (STATE_SELECTED == STATE_PICTURE_BROWSE) {
+                            } else if (stateSelected == STATE_PICTURE_BROWSE) {
                                 mCaptureListener.determine();
                             }
                         }
-                        STATE_SELECTED = STATE_LESSNESS;
+                        stateSelected = STATE_LESSNESS;
                         btn_left_X = btn_center_X;
                         btn_right_X = btn_center_X;
                         invalidate();
@@ -274,17 +276,17 @@ public class CaptureButton extends View {
                 break;
             case MotionEvent.ACTION_UP:
                 removeCallbacks(longPressRunnable);
-                if (STATE_SELECTED == STATE_READYQUIT) {
+                if (stateSelected == STATE_READYQUIT) {
                     if (event.getY() > btn_return_Y - 37 &&
                             event.getY() < btn_return_Y + 10 &&
                             event.getX() > btn_return_X - 37 &&
                             event.getX() < btn_return_X + 37) {
-                        STATE_SELECTED = STATE_LESSNESS;
+                        stateSelected = STATE_LESSNESS;
                         if (mCaptureListener != null) {
                             mCaptureListener.quit();
                         }
                     }
-                } else if (STATE_SELECTED == STATE_KEY_DOWN) {
+                } else if (stateSelected == STATE_KEY_DOWN) {
                     if (event.getY() > btn_center_Y - btn_outside_radius &&
                             event.getY() < btn_center_Y + btn_outside_radius &&
                             event.getX() > btn_center_X - btn_outside_radius &&
@@ -292,17 +294,17 @@ public class CaptureButton extends View {
                         if (mCaptureListener != null) {
                             mCaptureListener.capture();
                         }
-                        STATE_SELECTED = STATE_PICTURE_BROWSE;
+                        stateSelected = STATE_PICTURE_BROWSE;
                     }
-                } else if (STATE_SELECTED == STATE_RECORD) {
+                } else if (stateSelected == STATE_RECORD) {
                     if (record_anim.getCurrentPlayTime() < 500) {
-                        STATE_SELECTED = STATE_LESSNESS;
+                        stateSelected = STATE_LESSNESS;
 //                        Toast.makeText(mContext, "Under time", Toast.LENGTH_SHORT).show();
                         progress = 0;
                         invalidate();
                         record_anim.cancel();
                     } else {
-                        STATE_SELECTED = STATE_RECORD_BROWSE;
+                        stateSelected = STATE_RECORD_BROWSE;
                         removeCallbacks(recordRunnable);
 //                        Toast.makeText(mContext, "Time length " + record_anim.getCurrentPlayTime(), Toast.LENGTH_SHORT).show();
                         captureAnimation(getWidth() / 5, (getWidth() / 5) * 4);
@@ -338,7 +340,7 @@ public class CaptureButton extends View {
         @Override
         public void run() {
                 startAnimation(btn_before_outside_radius, btn_after_outside_radius, btn_before_inside_radius, btn_after_inside_radius);
-                STATE_SELECTED = STATE_RECORD;
+                stateSelected = STATE_RECORD;
         }
     }
 
@@ -351,7 +353,7 @@ public class CaptureButton extends View {
             record_anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
-                    if (STATE_SELECTED == STATE_RECORD) {
+                    if (stateSelected == STATE_RECORD) {
                         progress =  (float)animation.getAnimatedValue();
                     }
                     invalidate();
@@ -361,8 +363,8 @@ public class CaptureButton extends View {
                 @Override
                 public void onAnimationEnd(Animator animation) {
                     super.onAnimationEnd(animation);
-                    if (STATE_SELECTED == STATE_RECORD) {
-                        STATE_SELECTED = STATE_RECORD_BROWSE;
+                    if (stateSelected == STATE_RECORD) {
+                        stateSelected = STATE_RECORD_BROWSE;
                         progress = 0;
                         invalidate();
                         captureAnimation(getWidth() / 5, (getWidth() / 5) * 4);
@@ -399,7 +401,7 @@ public class CaptureButton extends View {
             @Override
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
-                if (STATE_SELECTED == STATE_RECORD) {
+                if (stateSelected == STATE_RECORD) {
                         postDelayed(recordRunnable, 100);
                 }
             }

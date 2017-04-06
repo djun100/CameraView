@@ -26,12 +26,13 @@ public class CheckPermissionsUtil {
         this.mContext = mContext;
     }
 
-    private String[] needPermissions = {
+    public static String[] needPermissions = {
             Manifest.permission.RECORD_AUDIO,
             Manifest.permission.WAKE_LOCK,
             Manifest.permission.CAMERA,
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_SETTINGS
+            Manifest.permission.WRITE_SETTINGS,
+            Manifest.permission.READ_EXTERNAL_STORAGE
     };
 
     private boolean checkPermission(String... needPermissions) {

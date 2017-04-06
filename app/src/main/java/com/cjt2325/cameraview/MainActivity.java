@@ -32,8 +32,8 @@ public class MainActivity extends AppCompatActivity {
 
         //////////////////////////////////////////////////////////////////
         //Andriod6.0 running permission
-        CheckPermissionsUtil checkPermissionsUtil = new CheckPermissionsUtil(this);
-        checkPermissionsUtil.requestAllPermission(this);
+//        CheckPermissionsUtil checkPermissionsUtil = new CheckPermissionsUtil(this);
+//        checkPermissionsUtil.requestAllPermission(this);
         mJCameraView = (JCameraView) findViewById(R.id.cameraview);
         //设置视频保存路径（如果不设置默认为Environment.getExternalStorageDirectory().getPath()）
         mJCameraView.setAutoFoucs(false);

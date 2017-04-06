@@ -24,7 +24,6 @@ import android.widget.VideoView;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -38,7 +37,7 @@ public class JCameraView extends RelativeLayout implements SurfaceHolder.Callbac
     private PowerManager.WakeLock wakeLock = null;
     private Context mContext;
     private VideoView mVideoView;
-    private ImageView mImageView;
+    private ImageView mivFrontOrBack;
     private FoucsView mFoucsView;
     private CaptureButton mCaptureButtom;
 
@@ -86,7 +85,7 @@ public class JCameraView extends RelativeLayout implements SurfaceHolder.Callbac
         this(context, attrs, 0);
     }
 
-    public JCameraView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public JCameraView(final Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         mContext = context;
         powerManager = (PowerManager) mContext.getSystemService(mContext.POWER_SERVICE);
@@ -113,7 +112,7 @@ public class JCameraView extends RelativeLayout implements SurfaceHolder.Callbac
             @Override
             public void cancel() {
 //                photoImageView.setVisibility(INVISIBLE);
-                mImageView.setVisibility(VISIBLE);
+                mivFrontOrBack.setVisibility(VISIBLE);
                 releaseCamera();
                 mCamera = getCamera(SELECTED_CAMERA);
                 setStartPreview(mCamera, mHolder);
@@ -127,7 +126,7 @@ public class JCameraView extends RelativeLayout implements SurfaceHolder.Callbac
                     cameraViewListener.captureSuccess(pictureBitmap);
                 }
 //                photoImageView.setVisibility(INVISIBLE);
-                mImageView.setVisibility(VISIBLE);
+                mivFrontOrBack.setVisibility(VISIBLE);
                 releaseCamera();
                 mCamera = getCamera(SELECTED_CAMERA);
                 setStartPreview(mCamera, mHolder);
@@ -214,14 +213,14 @@ public class JCameraView extends RelativeLayout implements SurfaceHolder.Callbac
         mCaptureButtom.setLayoutParams(btnParams);
 
 
-        mImageView = new ImageView(mContext);
+        mivFrontOrBack = new ImageView(mContext);
         Log.i("CJT", this.getMeasuredWidth() + " ==================================");
         LayoutParams imageViewParam = new LayoutParams(iconWidth, iconWidth);
         imageViewParam.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, RelativeLayout.TRUE);
         imageViewParam.setMargins(0, iconMargin, iconMargin, 0);
-        mImageView.setLayoutParams(imageViewParam);
-        mImageView.setImageResource(iconSrc);
-        mImageView.setOnClickListener(new OnClickListener() {
+        mivFrontOrBack.setLayoutParams(imageViewParam);
+        mivFrontOrBack.setImageResource(iconSrc);
+        mivFrontOrBack.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (mCamera != null) {
@@ -244,7 +243,7 @@ public class JCameraView extends RelativeLayout implements SurfaceHolder.Callbac
         mFoucsView.setVisibility(INVISIBLE);
         this.addView(mVideoView);
         this.addView(mCaptureButtom);
-        this.addView(mImageView);
+        this.addView(mivFrontOrBack);
         this.addView(mFoucsView);
 
 
@@ -303,6 +302,15 @@ public class JCameraView extends RelativeLayout implements SurfaceHolder.Callbac
                 mParam.setPictureFormat(ImageFormat.JPEG);
                 mParam.setJpegQuality(100);
             }
+
+            List<String> focusModes = mParam.getSupportedFocusModes();
+            if (focusModes != null) {
+                for (String mode : focusModes) {
+                    mode.contains("continuous-video");
+                    mParam.setFocusMode("continuous-video");
+                }
+            }
+
             camera.setParameters(mParam);
             mParam = camera.getParameters();
             camera.setPreviewDisplay(holder);
@@ -337,7 +345,7 @@ public class JCameraView extends RelativeLayout implements SurfaceHolder.Callbac
                         matrix.setRotate(90);
                         bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
                         pictureBitmap = bitmap;
-                        mImageView.setVisibility(INVISIBLE);
+                        mivFrontOrBack.setVisibility(INVISIBLE);
                         mCaptureButtom.captureSuccess();
                     }
                 });
@@ -351,7 +359,7 @@ public class JCameraView extends RelativeLayout implements SurfaceHolder.Callbac
                         matrix.postScale(-1, 1);
                         bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
                         pictureBitmap = bitmap;
-                        mImageView.setVisibility(INVISIBLE);
+                        mivFrontOrBack.setVisibility(INVISIBLE);
                         mCaptureButtom.captureSuccess();
                     }
                 });
@@ -372,7 +380,7 @@ public class JCameraView extends RelativeLayout implements SurfaceHolder.Callbac
                         matrix.setRotate(90);
                         bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
                         pictureBitmap = bitmap;
-                        mImageView.setVisibility(INVISIBLE);
+                        mivFrontOrBack.setVisibility(INVISIBLE);
                         mCaptureButtom.captureSuccess();
                     }
                 });
@@ -386,7 +394,7 @@ public class JCameraView extends RelativeLayout implements SurfaceHolder.Callbac
                         matrix.postScale(-1, 1);
                         bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
                         pictureBitmap = bitmap;
-                        mImageView.setVisibility(INVISIBLE);
+                        mivFrontOrBack.setVisibility(INVISIBLE);
                         mCaptureButtom.captureSuccess();
                     }
                 });
