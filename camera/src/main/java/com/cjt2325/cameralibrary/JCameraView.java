@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * 445263848@qq.com.
  */
-public class JCameraView extends RelativeLayout implements SurfaceHolder.Callback, Camera.AutoFocusCallback, CameraFocusListener {
+public class JCameraView extends RelativeLayout /*implements  CameraFocusListener*/ {
 
     public final String TAG = "JCameraView";
 
@@ -72,7 +72,8 @@ public class JCameraView extends RelativeLayout implements SurfaceHolder.Callbac
     private int CAMERA_FRONT_POSITION = -1;
 
     private CameraViewListener cameraViewListener;
-
+    private Camera.AutoFocusCallback mAutoFocusCallback;
+    private CameraFocusListener mCameraFocusListener;
     public void setCameraViewListener(CameraViewListener cameraViewListener) {
         this.cameraViewListener = cameraViewListener;
     }
@@ -102,7 +103,73 @@ public class JCameraView extends RelativeLayout implements SurfaceHolder.Callbac
 
         initView();
         mHolder = mVideoView.getHolder();
-        mHolder.addCallback(this);
+        mHolder.addCallback(new SurfaceHolder.Callback() {
+            @Override
+            public void surfaceCreated(SurfaceHolder holder) {
+                setStartPreview(mCamera, holder);
+                Log.i("Camera", "surfaceCreated");
+            }
+
+            @Override
+            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+                mHolder = holder;
+            }
+
+            @Override
+            public void surfaceDestroyed(SurfaceHolder holder) {
+                releaseCamera();
+                Log.i("Camera", "surfaceDestroyed");
+            }
+        });
+
+        mAutoFocusCallback = new Camera.AutoFocusCallback(){
+
+            //自动对焦
+            @Override
+            public void onAutoFocus(boolean success, Camera camera) {
+                if (autoFoucs) {
+                    if (SELECTED_CAMERA == CAMERA_POST_POSITION && success) {
+                        mCamera.takePicture(null, null, new Camera.PictureCallback() {
+                            @Override
+                            public void onPictureTaken(byte[] data, Camera camera) {
+                                Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+                                Matrix matrix = new Matrix();
+                                matrix.setRotate(90);
+                                bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+                                pictureBitmap = bitmap;
+                                mivFrontOrBack.setVisibility(INVISIBLE);
+                                mCaptureButtom.captureSuccess();
+                            }
+                        });
+                    } else if (SELECTED_CAMERA == CAMERA_FRONT_POSITION) {
+                        mCamera.takePicture(null, null, new Camera.PictureCallback() {
+                            @Override
+                            public void onPictureTaken(byte[] data, Camera camera) {
+                                Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+                                Matrix matrix = new Matrix();
+                                matrix.setRotate(270);
+                                matrix.postScale(-1, 1);
+                                bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+                                pictureBitmap = bitmap;
+                                mivFrontOrBack.setVisibility(INVISIBLE);
+                                mCaptureButtom.captureSuccess();
+                            }
+                        });
+                    }
+                }
+            }
+        };
+        mCameraFocusListener=new CameraFocusListener() {
+            @Override
+            public void onFocusBegin(float x, float y) {
+
+            }
+
+            @Override
+            public void onFocusEnd() {
+
+            }
+        };
         mCaptureButtom.setCaptureListener(new CaptureButton.CaptureListener() {
             @Override
             public void capture() {
@@ -250,7 +317,7 @@ public class JCameraView extends RelativeLayout implements SurfaceHolder.Callbac
         mVideoView.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                mCamera.autoFocus(JCameraView.this);
+                mCamera.autoFocus(mAutoFocusCallback);
                 Log.i(TAG, "Touch To Focus");
             }
         });
@@ -334,7 +401,7 @@ public class JCameraView extends RelativeLayout implements SurfaceHolder.Callbac
 
     public void capture() {
         if (autoFoucs) {
-            mCamera.autoFocus(this);
+            mCamera.autoFocus(mAutoFocusCallback);
         } else {
             if (SELECTED_CAMERA == CAMERA_POST_POSITION) {
                 mCamera.takePicture(null, null, new Camera.PictureCallback() {
@@ -367,40 +434,7 @@ public class JCameraView extends RelativeLayout implements SurfaceHolder.Callbac
         }
     }
 
-    //自动对焦
-    @Override
-    public void onAutoFocus(boolean success, Camera camera) {
-        if (autoFoucs) {
-            if (SELECTED_CAMERA == CAMERA_POST_POSITION && success) {
-                mCamera.takePicture(null, null, new Camera.PictureCallback() {
-                    @Override
-                    public void onPictureTaken(byte[] data, Camera camera) {
-                        Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-                        Matrix matrix = new Matrix();
-                        matrix.setRotate(90);
-                        bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-                        pictureBitmap = bitmap;
-                        mivFrontOrBack.setVisibility(INVISIBLE);
-                        mCaptureButtom.captureSuccess();
-                    }
-                });
-            } else if (SELECTED_CAMERA == CAMERA_FRONT_POSITION) {
-                mCamera.takePicture(null, null, new Camera.PictureCallback() {
-                    @Override
-                    public void onPictureTaken(byte[] data, Camera camera) {
-                        Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-                        Matrix matrix = new Matrix();
-                        matrix.setRotate(270);
-                        matrix.postScale(-1, 1);
-                        bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-                        pictureBitmap = bitmap;
-                        mivFrontOrBack.setVisibility(INVISIBLE);
-                        mCaptureButtom.captureSuccess();
-                    }
-                });
-            }
-        }
-    }
+
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -412,22 +446,7 @@ public class JCameraView extends RelativeLayout implements SurfaceHolder.Callbac
     }
 
 
-    @Override
-    public void surfaceCreated(SurfaceHolder holder) {
-        setStartPreview(mCamera, holder);
-        Log.i("Camera", "surfaceCreated");
-    }
 
-    @Override
-    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        mHolder = holder;
-    }
-
-    @Override
-    public void surfaceDestroyed(SurfaceHolder holder) {
-        releaseCamera();
-        Log.i("Camera", "surfaceDestroyed");
-    }
 
     public void onResume() {
         mCamera = getCamera(SELECTED_CAMERA);
@@ -565,27 +584,27 @@ public class JCameraView extends RelativeLayout implements SurfaceHolder.Callbac
         this.autoFoucs = autoFoucs;
     }
 
-    @Override
-    public void onFocusBegin(float x, float y) {
-        mFoucsView.setVisibility(VISIBLE);
-        mFoucsView.setX(x - mFoucsView.getWidth() / 2);
-        mFoucsView.setY(y - mFoucsView.getHeight() / 2);
-        mCamera.autoFocus(new Camera.AutoFocusCallback() {
-            @Override
-            public void onAutoFocus(boolean success, Camera camera) {
-                if (success) {
-                    mCamera.cancelAutoFocus();
-                    onFocusEnd();
-                }
-            }
-        });
-    }
-
-    //手动对焦结束
-    @Override
-    public void onFocusEnd() {
-        mFoucsView.setVisibility(INVISIBLE);
-    }
+//    @Override
+//    public void onFocusBegin(float x, float y) {
+//        mFoucsView.setVisibility(VISIBLE);
+//        mFoucsView.setX(x - mFoucsView.getWidth() / 2);
+//        mFoucsView.setY(y - mFoucsView.getHeight() / 2);
+//        mCamera.autoFocus(new Camera.AutoFocusCallback() {
+//            @Override
+//            public void onAutoFocus(boolean success, Camera camera) {
+//                if (success) {
+//                    mCamera.cancelAutoFocus();
+//                    onFocusEnd();
+//                }
+//            }
+//        });
+//    }
+//
+//    //手动对焦结束
+//    @Override
+//    public void onFocusEnd() {
+//        mFoucsView.setVisibility(INVISIBLE);
+//    }
 
     public interface CameraViewListener {
         public void quit();
@@ -598,7 +617,7 @@ public class JCameraView extends RelativeLayout implements SurfaceHolder.Callbac
     @Override
     public boolean onTouchEvent(final MotionEvent event) {
         if (!autoFoucs && event.getAction() == MotionEvent.ACTION_DOWN && SELECTED_CAMERA == CAMERA_POST_POSITION && !isPlay) {
-            onFocusBegin(event.getX(), event.getY());
+            mCameraFocusListener.onFocusBegin(event.getX(), event.getY());
         }
         return super.onTouchEvent(event);
     }
